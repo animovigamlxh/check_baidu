@@ -16,11 +16,11 @@ install_cron() {
     
     # 交互式询问执行间隔
     while true; do
-        read -p "请输入执行间隔时间（分钟，1-1440）[默认: 60]: " interval
+        read -p "请输入执行间隔时间（分钟，1-1440）[默认: 1]: " interval
         
         # 如果用户直接回车，使用默认值
         if [ -z "$interval" ]; then
-            interval=60
+            interval=1
             break
         fi
         
