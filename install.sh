@@ -70,17 +70,17 @@ if ping -c $PING_COUNT -W $TIMEOUT baidu.com > /dev/null 2>&1; then
     echo "启动服务..."
     
     # 启动 xrayr
-    if systemctl start xrayr 2>/dev/null; then
+    if xrayr start 2>/dev/null; then
         echo "xrayr 服务已启动"
     else
-        echo "xrayr 服务启动失败或不存在"
+        echo "xrayr 服务启动失败或命令不存在"
     fi
     
     # 启动 v2bx
-    if systemctl start v2bx 2>/dev/null; then
+    if v2bx start 2>/dev/null; then
         echo "v2bx 服务已启动"
     else
-        echo "v2bx 服务启动失败或不存在"
+        echo "v2bx 服务启动失败或命令不存在"
     fi
     
 else
@@ -88,17 +88,17 @@ else
     echo "停止服务..."
     
     # 停止 xrayr
-    if systemctl stop xrayr 2>/dev/null; then
+    if xrayr stop 2>/dev/null; then
         echo "xrayr 服务已停止"
     else
-        echo "xrayr 服务停止失败或不存在"
+        echo "xrayr 服务停止失败或命令不存在"
     fi
     
     # 停止 v2bx
-    if systemctl stop v2bx 2>/dev/null; then
+    if v2bx stop 2>/dev/null; then
         echo "v2bx 服务已停止"
     else
-        echo "v2bx 服务停止失败或不存在"
+        echo "v2bx 服务停止失败或命令不存在"
     fi
     
 fi
