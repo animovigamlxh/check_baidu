@@ -9,26 +9,49 @@ LOG_PATH="/var/log/network_check.log"
 
 # 安装函数
 install_cron() {
-    local interval=$1
+    echo "================================"
+    echo "  网络检测脚本安装向导"
+    echo "================================"
+    echo ""
     
-    # 默认每60分钟执行一次
-    if [ -z "$interval" ]; then
-        interval=60
+    # 交互式询问执行间隔
+    while true; do
+        read -p "请输入执行间隔时间（分钟，1-1440）[默认: 60]: " interval
+        
+        # 如果用户直接回车，使用默认值
+        if [ -z "$interval" ]; then
+            interval=60
+            break
+        fi
+        
+        # 验证输入是否为数字
+        if ! [[ "$interval" =~ ^[0-9]+$ ]]; then
+            echo "❌ 错误: 请输入数字"
+            continue
+        fi
+        
+        # 验证范围
+        if [ "$interval" -lt 1 ] || [ "$interval" -gt 1440 ]; then
+            echo "❌ 错误: 间隔时间必须在 1-1440 分钟之间"
+            continue
+        fi
+        
+        break
+    done
+    
+    echo ""
+    echo "⏱️  设置执行间隔: 每 $interval 分钟"
+    echo ""
+    
+    # 确认安装
+    read -p "确认安装？(y/n) [y]: " confirm
+    if [ -n "$confirm" ] && [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        echo "安装已取消"
+        exit 0
     fi
     
-    # 验证输入是否为数字
-    if ! [[ "$interval" =~ ^[0-9]+$ ]]; then
-        echo "错误: 间隔时间必须是数字（分钟）"
-        exit 1
-    fi
-    
-    # 验证间隔时间范围
-    if [ "$interval" -lt 1 ] || [ "$interval" -gt 1440 ]; then
-        echo "错误: 间隔时间必须在 1-1440 分钟之间"
-        exit 1
-    fi
-    
-    echo "正在安装定时任务（每 $interval 分钟执行一次）..."
+    echo ""
+    echo "🔧 正在安装..."
     
     # 保存脚本到系统目录
     cat > "$SCRIPT_PATH" << 'EOF'
@@ -85,82 +108,108 @@ echo "-----------------------------------"
 EOF
 
     chmod +x "$SCRIPT_PATH"
-    echo "脚本已安装到 $SCRIPT_PATH"
+    echo "✅ 脚本已安装到 $SCRIPT_PATH"
     
     # 生成 cron 表达式
     if [ "$interval" -eq 60 ]; then
         # 每小时执行
         cron_expr="0 * * * *"
+        interval_desc="每小时"
     elif [ "$interval" -lt 60 ]; then
         # 每X分钟执行
         cron_expr="*/$interval * * * *"
+        interval_desc="每 $interval 分钟"
     else
         # 每X小时执行
         hours=$((interval / 60))
         cron_expr="0 */$hours * * *"
+        interval_desc="每 $hours 小时"
     fi
     
     # 删除旧的定时任务（如果存在）
-    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab -
+    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab - 2>/dev/null
     
     # 添加新的定时任务
     (crontab -l 2>/dev/null; echo "$cron_expr $SCRIPT_PATH >> $LOG_PATH 2>&1") | crontab -
     
-    echo "定时任务已安装："
-    echo "  间隔: 每 $interval 分钟"
-    echo "  Cron表达式: $cron_expr"
-    echo "  日志位置: $LOG_PATH"
+    echo "✅ 定时任务已安装"
     echo ""
-    echo "提示: 可以使用 'crontab -l' 查看定时任务"
+    echo "================================"
+    echo "  安装完成！"
+    echo "================================"
+    echo "执行频率: $interval_desc"
+    echo "Cron表达式: $cron_expr"
+    echo "日志位置: $LOG_PATH"
     echo ""
+    echo "常用命令:"
+    echo "  查看定时任务: crontab -l"
+    echo "  查看日志: tail -f $LOG_PATH"
+    echo "  手动执行: $SCRIPT_PATH"
+    echo "  卸载脚本: curl -fsSL [脚本URL] | sudo bash -s uninstall"
+    echo ""
+    
     exit 0
 }
 
 # 卸载函数
 uninstall_cron() {
-    echo "正在卸载定时任务..."
+    echo "================================"
+    echo "  网络检测脚本卸载向导"
+    echo "================================"
+    echo ""
+    
+    # 确认卸载
+    read -p "确认卸载定时任务和脚本？(y/n) [n]: " confirm
+    if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        echo "卸载已取消"
+        exit 0
+    fi
+    
+    echo ""
+    echo "🔧 正在卸载..."
     
     # 删除定时任务
-    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab -
-    echo "定时任务已删除"
+    crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" | crontab - 2>/dev/null
+    echo "✅ 定时任务已删除"
     
     # 删除脚本文件
     if [ -f "$SCRIPT_PATH" ]; then
         rm -f "$SCRIPT_PATH"
-        echo "脚本文件已删除"
+        echo "✅ 脚本文件已删除"
     fi
     
-    echo "卸载完成！"
+    echo ""
+    echo "================================"
+    echo "  卸载完成！"
+    echo "================================"
+    echo ""
+    
     exit 0
 }
 
 # 检查命令行参数
 case "$1" in
     install)
-        install_cron "$2"
+        install_cron
         ;;
     uninstall)
         uninstall_cron
         ;;
     --help|-h)
-        echo "用法: bash <(curl -fsSL https://raw.githubusercontent.com/your-repo/network_check.sh) install [分钟]"
+        echo "网络检测和服务控制脚本"
         echo ""
-        echo "选项:"
-        echo "  install [分钟]  安装脚本和定时任务"
-        echo "                  分钟: 执行间隔时间，范围 1-1440（默认: 60）"
-        echo "  uninstall       卸载定时任务"
-        echo "  --help, -h      显示此帮助信息"
+        echo "用法:"
+        echo "  从 GitHub 安装:"
+        echo "    curl -fsSL https://raw.githubusercontent.com/.../network_check.sh | sudo bash -s install"
         echo ""
-        echo "示例:"
-        echo "  bash <(curl -fsSL https://raw.githubusercontent.com/.../network_check.sh) install"
-        echo "  bash <(curl -fsSL https://raw.githubusercontent.com/.../network_check.sh) install 30"
-        echo "  bash <(curl -fsSL https://raw.githubusercontent.com/.../network_check.sh) install 5"
+        echo "  卸载:"
+        echo "    curl -fsSL https://raw.githubusercontent.com/.../network_check.sh | sudo bash -s uninstall"
         echo ""
-        echo "卸载:"
-        echo "  bash <(curl -fsSL https://raw.githubusercontent.com/.../network_check.sh) uninstall"
+        echo "  本地安装:"
+        echo "    sudo bash network_check.sh install"
         echo ""
-        echo "查看日志:"
-        echo "  tail -f /var/log/network_check.log"
+        echo "安装时会交互式询问执行间隔时间"
+        echo ""
         exit 0
         ;;
     *)
