@@ -20,7 +20,7 @@ install_cron() {
         
         # 如果用户直接回车，使用默认值
         if [ -z "$interval" ]; then
-            interval=1
+            interval=60
             break
         fi
         
