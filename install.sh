@@ -87,11 +87,11 @@ else
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Ping超时，网络异常"
     echo "停止服务..."
     
-    # 停止 xrayr
-    if xrayr stop 2>/dev/null; then
-        echo "xrayr 服务已停止"
+    # 停止 v2node
+    if v2node stop 2>/dev/null; then
+        echo "v2node 服务已停止"
     else
-        echo "xrayr 服务停止失败或命令不存在"
+        echo "v2node 服务停止失败或命令不存在"
     fi
     
     # 停止 v2bx
