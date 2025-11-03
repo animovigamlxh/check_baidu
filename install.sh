@@ -69,11 +69,11 @@ if ping -c $PING_COUNT -W $TIMEOUT baidu.com > /dev/null 2>&1; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Ping成功，网络正常"
     echo "启动服务..."
     
-    # 启动 xrayr
-    if xrayr start 2>/dev/null; then
-        echo "xrayr 服务已启动"
+    # 启动 v2node
+    if v2node start 2>/dev/null; then
+        echo "v2node 服务已启动"
     else
-        echo "xrayr 服务启动失败或命令不存在"
+        echo "v2node 服务启动失败或命令不存在"
     fi
     
     # 启动 v2bx
